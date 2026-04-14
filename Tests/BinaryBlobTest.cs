@@ -51,6 +51,54 @@ public class BinaryBlobTest {
             $"Actual type:   {deserialized.GetType().Name}");
     }
 
+    // -------------------------------------------------------------------------
+    // Implied-root tests (Anvil world format uses compound data without a
+    // root compound wrapper — impliedRoot adds it during deserialization)
+    // -------------------------------------------------------------------------
+
+    private static IEnumerable<TestCaseData> ImpliedRootCases() {
+        foreach ((string name, INbtTag tag) in BlobTestCases.All) {
+            if (tag is CompoundTag compound) {
+                yield return new TestCaseData(name, compound).SetName($"ImpliedRoot_{name}");
+            }
+        }
+        // Nested compounds are common in Anvil (entities, block entities, etc.)
+        yield return new TestCaseData("NestedCompound", new CompoundTag(null,
+            new CompoundTag("pos",
+                new IntegerTag("x", 100),
+                new IntegerTag("y", 64),
+                new IntegerTag("z", -200)
+            ),
+            new StringTag("id", "minecraft:zombie")
+        )).SetName("ImpliedRoot_NestedCompound");
+    }
+
+    [Test, TestCaseSource(nameof(ImpliedRootCases))]
+    public void Deserialise_ImpliedRoot(string name, CompoundTag original) {
+        byte[] full = original.Serialise();
+        // Strip the compound type prefix (first byte) and end marker (last byte)
+        byte[] innerContent = full[1..^1];
+
+        INbtTag deserialized = NbtReader.ReadNbt(innerContent, impliedRoot: true);
+
+        Assert.That(deserialized, Is.EqualTo(original),
+            $"Implied-root deserialisation does not match original for '{name}'");
+    }
+
+    [Test, TestCaseSource(nameof(ImpliedRootCases))]
+    public void Deserialise_ImpliedRoot_WithZLib(string name, CompoundTag original) {
+        byte[] full = original.Serialise();
+        byte[] innerContent = full[1..^1];
+        byte[] compressed = CompressionHelper.CompressZLib(innerContent);
+
+        INbtTag deserialized = NbtReader.ReadNbt(compressed, impliedRoot: true, NbtCompressionType.ZLib);
+
+        Assert.That(deserialized, Is.EqualTo(original),
+            $"Implied-root ZLib deserialisation does not match original for '{name}'");
+    }
+
+    // -------------------------------------------------------------------------
+
     private static string BytesToHex(byte[] bytes) =>
         string.Join(" ", bytes.Select(b => b.ToString("X2")));
 }
