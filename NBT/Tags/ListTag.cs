@@ -44,8 +44,8 @@ public class ListTag : INbtTag, IEquatable<ListTag> {
 
     public ListTag(INbtTag[] tags) {
         if (tags.Length > 0) {
-            Type type = tags[0].GetType();
-            if (tags.Skip(1).Any(tag => tag.GetType() != type)) {
+            byte prefix = tags[0].GetPrefix();
+            if (tags.Skip(1).Any(tag => tag.GetPrefix() != prefix)) {
                 throw new ArrayTypeMismatchException("All elements of a list tag must be the same type");
             }
         }
