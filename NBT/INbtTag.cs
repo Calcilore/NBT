@@ -134,7 +134,7 @@ public interface INbtTag {
         }
         
         if (json.Type == JTokenType.Float) {
-            return new DoubleTag(json.ToObject<float>());  // use high precision for doubles
+            return new DoubleTag(json.ToObject<double>());  // use high precision for doubles
         }
         
         throw new NotImplementedException("Cannot create tag from JSON of type " + json.Type + ".");
