@@ -425,6 +425,20 @@ public class EqualsHashCodeTests {
     }
     
     [Test]
+    public void CompoundTag_GetHashCode_DifferentOrder_SameHashCode() {
+        CompoundTag tag1 = new(
+            ("int", new IntegerTag(42)),
+            ("string", new StringTag("value"))
+        );
+        CompoundTag tag2 = new(
+            ("string", new StringTag("value")),
+            ("int", new IntegerTag(42))
+        );
+        
+        Assert.That(tag1.GetHashCode(), Is.EqualTo(tag2.GetHashCode()));
+    }
+    
+    [Test]
     public void CompoundTag_Equals_NestedCompound_ReturnsTrue() {
         CompoundTag tag1 = new(("inner", new CompoundTag(("value", new IntegerTag(42)))));
         CompoundTag tag2 = new(("inner", new CompoundTag(("value", new IntegerTag(42)))));

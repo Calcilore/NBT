@@ -116,7 +116,7 @@ public class CompoundTag : INbtTag, IEquatable<CompoundTag> {
 
     public override int GetHashCode() {
         HashCode hash = new();
-        foreach (DictionaryEntry kvp in _children) {
+        foreach (DictionaryEntry kvp in _children.Cast<DictionaryEntry>().OrderBy(e => (string)e.Key)) {
             hash.Add((string)kvp.Key);
             hash.Add((INbtTag)kvp.Value!);
         }
