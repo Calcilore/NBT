@@ -4,12 +4,16 @@ public class ListTag<T> : ListTag, IEquatable<ListTag<T>> where T : INbtTag {
     private readonly T[] _tags;
     public new ReadOnlySpan<T> Tags => _tags;
 
-    public ListTag(T[] tags) : base(tags.Cast<INbtTag>().ToArray()) {
-        if (typeof(T) == typeof(INbtTag)) {
-            throw new ArgumentException("List must only be of one type.", nameof(T));
-        }
-        
-        _tags = TagsArray.Cast<T>().ToArray();
+    public ListTag(params T[] tags) {
+        _tags = tags.ToArray();
+        TagsArray = tags.Cast<INbtTag>().ToArray();
+        Verify();
+    }
+    
+    public ListTag(IEnumerable<T> tags) {
+        _tags = tags.ToArray();
+        TagsArray = _tags.Cast<INbtTag>().ToArray();
+        Verify();
     }
 
     public bool Equals(ListTag<T>? other) {
@@ -39,18 +43,30 @@ public class ListTag<T> : ListTag, IEquatable<ListTag<T>> where T : INbtTag {
 }
 
 public class ListTag : INbtTag, IEquatable<ListTag> {
-    protected readonly INbtTag[] TagsArray;
+    protected INbtTag[] TagsArray;
     public ReadOnlySpan<INbtTag> Tags => TagsArray;
 
-    public ListTag(INbtTag[] tags) {
-        if (tags.Length > 0) {
-            byte prefix = tags[0].GetPrefix();
-            if (tags.Skip(1).Any(tag => tag.GetPrefix() != prefix)) {
+    public ListTag(params INbtTag[] tags) {
+        TagsArray = tags.ToArray();
+        Verify();
+    }
+
+    public ListTag(IEnumerable<INbtTag> tags) {
+        TagsArray = tags.ToArray();
+        Verify();
+    }
+
+    protected void Verify() {
+        if (TagsArray.Length == 0) {
+            return;
+        }
+        
+        byte prefix = TagsArray[0].GetPrefix();
+        for (int i = 1; i < TagsArray.Length; i++) {
+            if (TagsArray[i].GetPrefix() != prefix) {
                 throw new ArrayTypeMismatchException("All elements of a list tag must be the same type");
             }
         }
-        
-        TagsArray = tags;
     }
 
     public byte GetPrefix() {
@@ -90,7 +106,7 @@ public class ListTag : INbtTag, IEquatable<ListTag> {
 
     public override int GetHashCode() {
         HashCode hash = new();
-        foreach (INbtTag tag in TagsArray) {
+        foreach (INbtTag tag in Tags) {
             hash.Add(tag);
         }
         return hash.ToHashCode();
