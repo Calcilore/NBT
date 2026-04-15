@@ -1,17 +1,18 @@
 namespace NBT.Tags;
 
 public class ListTag<T> : ListTag, IEquatable<ListTag<T>> where T : INbtTag {
-    public new ReadOnlySpan<T> Tags => TagsArray.Cast<T>().ToArray();
+    private readonly T[] _tags;
+    public new ReadOnlySpan<T> Tags => _tags;
 
     public ListTag(T[] tags) : base(tags.Cast<INbtTag>().ToArray()) {
         if (typeof(T) == typeof(INbtTag)) {
             throw new ArgumentException("List must only be of one type.", nameof(T));
         }
+        
+        _tags = TagsArray.Cast<T>().ToArray();
     }
 
     public bool Equals(ListTag<T>? other) {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
         return base.Equals(other);
     }
 
@@ -39,7 +40,6 @@ public class ListTag<T> : ListTag, IEquatable<ListTag<T>> where T : INbtTag {
 
 public class ListTag : INbtTag, IEquatable<ListTag> {
     protected readonly INbtTag[] TagsArray;
-
     public ReadOnlySpan<INbtTag> Tags => TagsArray;
 
     public ListTag(INbtTag[] tags) {
